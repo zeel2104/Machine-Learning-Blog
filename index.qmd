@@ -1,0 +1,18 @@
+---
+title: "Machine Learning Blog"
+format: html
+title-slide-style: pandoc
+colortheme: white
+listing:
+  contents: posts
+  sort: "date desc"
+  type: default
+  categories: true
+  sort-ui: false
+  filter-ui: false
+page-layout: full
+#title-block-banner: "qwq.jpg"
+title-block-banner: true
+---
+
+

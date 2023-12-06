@@ -1,0 +1,240 @@
+---
+title: "Blog 2: Anomaly/outlier detection"
+author: "Zeel Desai"
+date: "2023-11-28"
+categories: [code, analysis]
+image: "image.jpg"
+---
+
+**Detecting Anomalies in Superstores Dataset**
+
+```{python}
+
+# Introduction
+
+# Detecting anomalies in machine learning entails recognizing instances or patterns in data that exhibit notable deviations from the typical or anticipated behavior. Anomalies, often referred to as outliers, can signify infrequent occurrences, errors, or potentially suspicious activities. The selection of an appropriate method is vital, taking into account the specific characteristics of the data and the inherent nature of the anomalies under investigation. Moreover, the assessment of anomaly detection models typically requires careful consideration of factors such as false positives, false negatives, and the domain-specific implications of the detection outcomes.
+
+```
+
+```{python}
+
+
+#The code begins by importing necessary libraries and loading a dataset named 'Superstore.csv' using Pandas. The first few rows of the dataset are displayed.
+
+import pandas as pd
+import numpy as np
+from numpy import percentile
+import matplotlib.pyplot as plt
+import seaborn as sns
+import matplotlib
+
+from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import MinMaxScaler
+
+from sklearn.ensemble import IsolationForest
+
+from scipy import stats
+```
+
+```{python}
+df = pd.read_csv('Superstore.csv')
+df.head()
+```
+
+```{python}
+#Two scatter plots are created to visualize the distribution of sales and profit values in the dataset. Additionally, distribution plots (histograms) are generated for both sales and profit.
+
+plt.scatter(range(df.shape[0]), np.sort(df['Sales'].values))
+plt.xlabel('index')
+plt.ylabel('Sales')
+plt.title("Sales distribution")
+sns.despine()
+```
+
+```{python}
+
+
+import warnings
+warnings.filterwarnings("ignore")
+sns.distplot(df['Sales'])
+plt.title("Distribution of Sales")
+sns.despine()
+```
+
+```{python}
+
+#Skewness and kurtosis metrics are calculated for both the sales and profit columns. These metrics provide insights into the shape and symmetry of the distributions
+
+print("Skewness: %f" % df['Sales'].skew())
+print("Kurtosis: %f" % df['Sales'].kurt())
+```
+
+```{python}
+df.Profit.describe()
+```
+
+
+
+```{python}
+plt.scatter(range(df.shape[0]), np.sort(df['Profit'].values))
+plt.xlabel('index')
+plt.ylabel('Profit')
+plt.title("Profit distribution")
+sns.despine()
+```
+
+```{python}
+import warnings
+warnings.filterwarnings("ignore")
+sns.distplot(df['Profit'])
+plt.title("Distribution of Profit")
+sns.despine()
+```
+
+
+```{python}
+print("Skewness: %f" % df['Profit'].skew())
+print("Kurtosis: %f" % df['Profit'].kurt())
+```
+
+```{python}
+
+#Univariate Anomaly Detection on Sales
+
+```
+
+```{python}
+#Isolation Forest is applied to detect anomalies in the 'Sales' column. An anomaly score and an outlier label are assigned to each data point.
+
+isolation_forest = IsolationForest(n_estimators=100, contamination=0.01)
+isolation_forest.fit(df['Sales'].values.reshape(-1, 1))
+df['anomaly_score_univariate_sales'] = isolation_forest.decision_function(df['Sales'].values.reshape(-1, 1))
+df['outlier_univariate_sales'] = isolation_forest.predict(df['Sales'].values.reshape(-1, 1))
+```
+
+
+```{python}
+#A plot is created to display the anomaly scores along with the outlier region detected by the Isolation Forest algorithm.
+
+xx = np.linspace(df['Sales'].min(), df['Sales'].max(), len(df)).reshape(-1,1)
+anomaly_score = isolation_forest.decision_function(xx)
+outlier = isolation_forest.predict(xx)
+
+plt.figure(figsize=(10,4))
+plt.plot(xx, anomaly_score, label='anomaly score')
+plt.fill_between(xx.T[0], np.min(anomaly_score), np.max(anomaly_score), 
+                 where=outlier==-1, color='r', 
+                 alpha=.4, label='outlier region')
+plt.legend()
+plt.ylabel('anomaly score')
+plt.xlabel('Sales')
+plt.show();
+```
+
+```{python}
+#Anomaly detection on Profit
+
+```
+
+```{python}
+#Similar to sales, Isolation Forest is applied to detect anomalies in the 'Profit' column. Anomaly scores and outlier labels are assigned
+
+isolation_forest = IsolationForest(n_estimators=100, contamination=0.01)
+isolation_forest.fit(df['Profit'].values.reshape(-1, 1))
+df['anomaly_score_univariate_profit'] = isolation_forest.decision_function(df['Profit'].values.reshape(-1, 1))
+df['outlier_univariate_profit'] = isolation_forest.predict(df['Profit'].values.reshape(-1, 1))
+```
+
+
+```{python}
+#Anomalies in the 'Profit' column are sorted based on their anomaly scores to identify high-scoring anomalies.
+
+df.sort_values('anomaly_score_univariate_profit')
+```
+
+
+```{python}
+
+#Similar to the sales plot, a visualization is created for the anomaly scores and outlier region in the 'Profit' column.
+#Data points that are identified as anomalies in both sales and profit are retrieved.
+
+xx = np.linspace(df['Profit'].min(), df['Profit'].max(), len(df)).reshape(-1,1)
+anomaly_score = isolation_forest.decision_function(xx)
+outlier = isolation_forest.predict(xx)
+plt.figure(figsize=(10,4))
+plt.plot(xx, anomaly_score, label='anomaly score')
+plt.fill_between(xx.T[0], np.min(anomaly_score), np.max(anomaly_score), 
+                 where=outlier==-1, color='r', 
+                 alpha=.4, label='outlier region')
+plt.legend()
+plt.ylabel('anomaly score')
+plt.xlabel('Profit')
+plt.show();
+```
+
+```{python}
+df[(df['outlier_univariate_profit']==-1) & (df['outlier_univariate_sales']==-1)]
+```
+
+```{python}
+
+#Multivariate Anomaly Detection
+
+```
+
+```{python}
+#A scatter plot is created to visualize the relationship between sales and profit. Then, Min-Max scaling is applied to normalize the features.
+
+sns.regplot(x="Sales", y="Profit", data=df)
+sns.despine();
+```
+
+
+```{python}
+minmax = MinMaxScaler(feature_range=(0, 1))
+X = minmax.fit_transform(df[['Sales','Profit']])
+```
+
+
+```{python}
+#Isolation Forest is applied to the normalized features (sales and profit) for multivariate anomaly detection. Anomaly scores and outlier labels are assigned.
+
+clf = IsolationForest(n_estimators=100, contamination=0.01, random_state=0)
+clf.fit(X)
+
+# predict raw anomaly score
+df['multivariate_anomaly_score'] = clf.decision_function(X)
+        
+# prediction of a datapoint category outlier or inlier
+df['multivariate_outlier'] = clf.predict(X)
+```
+
+```{python}
+#A scatter plot is created to visualize the multivariate anomalies, where each point is color-coded based on whether it is considered an outlier.
+
+plt.scatter(df['Sales'], df['Profit'],
+            c=df.multivariate_outlier, edgecolor='none', alpha=0.5,
+            cmap=plt.cm.get_cmap('Paired', 10))
+plt.xlabel('Sales')
+plt.ylabel('Profit')
+plt.colorbar();
+```
+
+```{python}
+#Data points that are identified as multivariate anomalies are retrieved.
+
+df[(df['outlier_univariate_sales'] == 1) & (df['outlier_univariate_profit'] == 1) & (df['multivariate_outlier'] == -1)]
+```
+
+```{python}
+minmax = MinMaxScaler(feature_range=(0, 1))
+X = minmax.fit_transform(df[['Sales','Profit']])
+```
+
+```{python}
+
+# Conclusion
+
+# In summary, the code explores, visualizes, and detects anomalies in the 'Sales' and 'Profit' columns of a dataset. It employs both univariate and multivariate anomaly detection using the Isolation Forest algorithm. Anomalies are visualized, and common anomalies are identified based on different criteria.
+
+```

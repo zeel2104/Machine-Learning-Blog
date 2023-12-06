@@ -1,0 +1,122 @@
+---
+title: "Blog 1: Probability theory and random variables"
+author: "Zeel Desai"
+date: "2023-11-28"
+categories: [code, analysis]
+image: "image.png"
+---
+
+# Exploring probability theory and random variables using logistic Regression
+
+```{python}
+
+# Introduction
+
+# In probability theory, we deal with the likelihood of events occurring. Logistic regression models the probability that a given input belongs to a particular category. The logistic function (also known as the sigmoid function) is used to map the linear combination of input features to a probability between 0 and 1. 
+
+```
+```{python}
+#The code begins by importing necessary libraries: NumPy for numerical operations, Matplotlib for plotting, and Pandas for handling datasets.
+import numpy as np
+import matplotlib.pyplot as plt
+import pandas as pd
+```
+
+```{python}
+#It loads a dataset from a CSV file named 'SocialNetworks.csv' using Pandas.
+#It selects specific columns (2 and 3) as the features (X) and column 4 as the target variable (Y).
+
+datasets = pd.read_csv('SocialNetworks.csv')
+X = datasets.iloc[:, [2,3]].values
+Y = datasets.iloc[:, 4].values
+```
+
+```{python}
+
+# Splitting the dataset into the Training set and Test set
+#75% of the data is used for training (X_Train, Y_Train), and 25% for testing (X_Test, Y_Test).
+
+from sklearn.model_selection import train_test_split
+X_Train, X_Test, Y_Train, Y_Test = train_test_split(X, Y, test_size = 0.25, random_state = 0)
+```
+
+```{python}
+
+
+# Feature Scaling
+# Standardization (feature scaling) is applied to the features using StandardScaler from scikit-learn. It ensures that all features have the same scale.
+
+from sklearn.preprocessing import StandardScaler
+sc_X = StandardScaler()
+X_Train = sc_X.fit_transform(X_Train)
+X_Test = sc_X.transform(X_Test)
+```
+
+```{python}
+# Fitting the Logistic Regression into the Training set
+from sklearn.linear_model import LogisticRegression
+classifier = LogisticRegression(random_state = 0)
+classifier.fit(X_Train, Y_Train)
+
+```
+
+```{python}
+# Visualising the clusters
+
+# Predicting the test set results
+
+
+Y_Pred = classifier.predict(X_Test)
+```
+
+```{python}
+
+from sklearn.metrics import confusion_matrix
+cm = confusion_matrix(Y_Test, Y_Pred)
+```
+
+```{python}
+
+from sklearn.metrics import confusion_matrix
+cm = confusion_matrix(Y_Test, Y_Pred)
+```
+
+```{python}
+
+cm
+```
+
+```{python}
+
+# Visualising the Training set results 
+# The code creates a contour plot to visualize the decision boundary of the logistic regression model on the training set.
+#It uses a fine grid (X1, X2) to predict the classes at each point and then plots the decision boundary.
+#The training set points are also plotted with different colors for different classes (red and green).
+
+from matplotlib.colors import ListedColormap
+X_Set, Y_Set = X_Train, Y_Train
+X1, X2 = np.meshgrid(np.arange(start = X_Set[:,0].min() -1, stop = X_Set[:, 0].max() +1, step = 0.01),
+                     np.arange(start = X_Set[:,1].min() -1, stop = X_Set[:, 1].max() +1, step = 0.01))
+
+plt.contourf(X1,X2, classifier.predict(np.array([X1.ravel(), X2.ravel()]).T).reshape(X1.shape),
+             alpha = 0.75, cmap = ListedColormap(('red', 'green')))
+
+plt.xlim(X1.min(), X2.max())
+plt.ylim(X2.min(), X2.max())
+for i, j in enumerate(np.unique(Y_Set)):
+    plt.scatter(X_Set[Y_Set == j, 0], X_Set[Y_Set == j,1],
+                c = ListedColormap(('red', 'green'))(i), label = j)
+plt.title('Logistic Regression ( Training set)')
+plt.xlabel('Age')
+plt.ylabel('Estimated Salary')
+plt.legend()
+plt.show()
+```
+
+```{python}
+
+# Conclusion:
+
+# We conclude that the code is a complete workflow for training and evaluating a logistic regression model on a dataset. It goes through the standard steps of data preparation, model training, evaluation, and visualization to understand how well the logistic regression model is performing on the given data.
+
+```

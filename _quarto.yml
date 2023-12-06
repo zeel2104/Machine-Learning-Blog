@@ -1,0 +1,22 @@
+project:
+  type: website
+  output-dir: docs
+
+website:
+  repo-url: https://github.com/zeel2104/Machine-Learning-Blog
+  repo-actions: [source]
+  title: "Machine Learning Blog"
+  navbar:
+    right:
+      - about.qmd
+      - icon: github
+        href: https://github.com/zeel2104
+      - icon: linkedin
+        href: https://www.linkedin.com/in/zeeldesai28/
+format:
+  html:
+    theme: cosmos
+    css: styles.css
+
+
+
